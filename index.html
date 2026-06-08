@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kingsley Chow — Persona</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bungee&family=Oswald:wght@400;500;600;700&family=Passion+One:wght@700;900&family=Rozha+One&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <!-- Looping Persona 5 title-screen video background -->
+  <video class="bg-video" autoplay muted playsinline poster="">
+    <source src="./assets/loopedbasemenu.mp4" type="video/mp4">
+  </video>
+  <div class="bg-shade"></div>
+
+  <!-- SVG filter: distorts the hovered highlight into flickering flame licks -->
+  <svg class="svg-defs" width="0" height="0" aria-hidden="true">
+    <defs>
+      <!-- Splatoon ink: roughens the hovered highlight edges into a gloopy
+           black ink/paint stroke. -->
+      <filter id="ink-paint" x="-40%" y="-40%" width="180%" height="180%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.55 0.4" numOctaves="2" seed="7" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="14"
+          xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+      <!-- Chroma key: makes the green-screen background transparent (alpha = 1 - 2*G)
+           so red content stays opaque and the menu beneath is left untouched. -->
+      <filter id="chromakey" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <!-- keep all colors (identity RGB); key out only where green dominates.
+             alpha = 1 + 8R - 8G + 2B  → pure green→0, but YELLOW (high R+G) stays
+             opaque thanks to the strong +8R term; white/skin/red/gold all kept. -->
+        <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0
+                                             0 1 0 0 0
+                                             0 0 1 0 0
+                                             8 -8 2 0 1" result="keyed" />
+        <!-- The matrix turns fully-transparent pixels (the sub-pixel letterbox
+             fringe at the element's edges) into OPAQUE BLACK (alpha = 0+0+0+1).
+             Clip the result back to the source's own alpha so those edge pixels
+             stay transparent — kills the thin black border on the clip edges. -->
+        <feComposite in="keyed" in2="SourceGraphic" operator="in" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- "Take Your Heart" calling-card logo, bottom-left (click for the explosion) -->
+  <button class="take-heart" id="take-heart" type="button" aria-label="Arsène speaks">
+    <img src="./assets/takeheart.webp" alt="Take Your Heart">
+  </button>
+
+  <div class="stage">
+    <!-- The pause menu -->
+    <nav class="menu" id="menu">
+      <a class="menu-item is-active" href="#" data-target="persona">
+        <span class="menu-label">Persona</span>
+      </a>
+      <a class="menu-item" href="#" data-target="skills">
+        <span class="menu-label">Favorites</span>
+      </a>
+      <a class="menu-item" href="#" data-target="education">
+        <span class="menu-label">Education</span>
+      </a>
+      <a class="menu-item" href="#" data-target="experience">
+        <span class="menu-label">Socials</span>
+      </a>
+      <a class="menu-item" href="#" data-target="guests">
+        <span class="menu-label">Guests</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Quick fade-to-black used when opening the Persona section -->
+  <div class="fade-black" id="fade-black"></div>
+
+  <!-- Full-screen section transition-out clip (src set per-section in script.js).
+       Transparent 1x1 poster avoids a black flash before the first frame decodes. -->
+  <video class="transition-out" id="transition-out" playsinline preload="auto"
+    poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAen63NgAAAAASUVORK5CYII="></video>
+
+  <!-- Sliding content panels (the "submenus") -->
+  <div class="panel-wrap" id="panel-wrap" hidden>
+    <button class="panel-close" id="panel-close" aria-label="Back (Escape)">
+      <span class="key">ESC</span>
+      <span class="key-label">Back</span>
+    </button>
+
+    <section class="panel panel--media" data-panel="persona">
+      <video class="section-video" muted playsinline preload="auto">
+        <source src="./assets/personaloopedmenu.mp4" type="video/mp4">
+      </video>
+      <!-- Persona blurb card: a green-screen clip with the green keyed out.
+           Slides in from the left on open, synced to the education text SFX.
+           The "18" age number contains the same pure green as the screen, so a
+           second UN-keyed copy, clipped to just the number, is layered on top to
+           keep the number's green glitch. -->
+      <div class="persona-text" aria-hidden="true">
+        <video class="persona-text-vid pt-base" muted playsinline preload="auto">
+          <source src="./assets/personatext.mp4" type="video/mp4">
+        </video>
+        <video class="persona-text-vid pt-num" muted playsinline preload="auto">
+          <source src="./assets/personatext.mp4" type="video/mp4">
+        </video>
+      </div>
+      <!-- Two polaroid photos (green screen removed), placed above the gun. -->
+      <img class="persona-photo persona-photo--bottom" src="./assets/photos_bottom.webp" alt="" aria-hidden="true">
+      <img class="persona-photo persona-photo--top" src="./assets/photos_top.webp" alt="" aria-hidden="true">
+    </section>
+
+    <section class="panel panel--media" data-panel="experience">
+      <video class="section-video" muted playsinline preload="auto">
+        <source src="./assets/personaloopedmenu1.mp4" type="video/mp4">
+      </video>
+      <!-- Socials: green-keyed banner stack, aligned to the section's left
+           diagonal. Slides in from the left + camera shake on open (shared with
+           Persona) once the transition has started playing out. -->
+      <img class="socials-card" src="./assets/socials.webp" alt="" aria-hidden="true">
+    </section>
+
+    <section class="panel panel--media" data-panel="skills">
+      <video class="section-video" muted playsinline preload="auto">
+        <source src="./assets/personaloopedmenu3.mp4" type="video/mp4">
+      </video>
+      <!-- Favorites: the collage split into individual photos, spread across the
+           empty left side (character silhouette is on the right). Rows 2 & 3 are
+           pushed lower to cover the page; the white strings are redrawn (SVG) to
+           connect the repositioned photos. The whole board drops in from the top. -->
+      <div class="fav-board" aria-hidden="true">
+      <svg class="fav-strings" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line x1="10.62" y1="19.00" x2="36.30" y2="15.00" />
+        <line x1="36.30" y1="15.00" x2="63.72" y2="15.00" />
+        <line x1="63.72" y1="15.00" x2="90.07" y2="24.00" />
+        <line x1="10.62" y1="19.00" x2="28.36" y2="49.00" />
+        <line x1="36.30" y1="15.00" x2="47.62" y2="47.00" />
+        <line x1="63.72" y1="15.00" x2="68.11" y2="46.00" />
+        <line x1="28.36" y1="49.00" x2="47.62" y2="47.00" />
+        <line x1="47.62" y1="47.00" x2="68.11" y2="46.00" />
+        <line x1="90.07" y1="24.00" x2="68.11" y2="46.00" />
+        <line x1="28.36" y1="49.00" x2="27.31" y2="81.00" />
+        <line x1="28.36" y1="49.00" x2="8.61" y2="82.00" />
+        <line x1="47.62" y1="47.00" x2="50.11" y2="81.00" />
+        <line x1="68.11" y1="46.00" x2="50.11" y2="81.00" />
+        <line x1="68.11" y1="46.00" x2="70.47" y2="84.00" />
+        <line x1="90.07" y1="24.00" x2="88.66" y2="80.00" />
+        <line x1="27.31" y1="81.00" x2="8.61" y2="82.00" />
+        <line x1="27.31" y1="81.00" x2="50.11" y2="81.00" />
+        <line x1="50.11" y1="81.00" x2="70.47" y2="84.00" />
+        <line x1="70.47" y1="84.00" x2="88.66" y2="80.00" />
+      </svg>
+      <img class="fav-pc" style="left:36.30%;top:15%;width:22.69%" src="./assets/fav_00.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:90.07%;top:24%;width:19.80%" src="./assets/fav_01.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:10.62%;top:19%;width:20.12%" src="./assets/fav_02.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:63.72%;top:15%;width:20.92%" src="./assets/fav_03.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:47.62%;top:47%;width:16.43%" src="./assets/fav_04.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:68.11%;top:46%;width:20.92%" src="./assets/fav_05.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:28.36%;top:49%;width:18.57%" src="./assets/fav_06.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:88.66%;top:80%;width:20.17%" src="./assets/fav_07.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:8.61%;top:82%;width:17.28%" src="./assets/fav_08.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:50.11%;top:81%;width:23.22%" src="./assets/fav_09.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:27.31%;top:81%;width:17.98%" src="./assets/fav_10.webp" alt="" aria-hidden="true">
+      <img class="fav-pc" style="left:70.47%;top:84%;width:13.22%" src="./assets/fav_11.webp" alt="" aria-hidden="true">
+      </div>
+    </section>
+
+    <section class="panel panel--media" data-panel="education">
+      <video class="section-video" muted playsinline preload="auto">
+        <source src="./assets/personaloopedmenu2.mp4" type="video/mp4">
+      </video>
+      <!-- Two green-screen clips stacked on the right (edu1 on top), keyed out.
+           JS plays the intro once with audio on transition-in, then loops only
+           the settled-text tail (muted). -->
+      <div class="edu-stack">
+        <video class="edu-clip" playsinline preload="auto">
+          <source src="./assets/edu1.mp4" type="video/mp4">
+        </video>
+        <video class="edu-clip" playsinline preload="auto">
+          <source src="./assets/edu2.mp4" type="video/mp4">
+        </video>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="guests">
+      <h2 class="panel-title">Guests</h2>
+      <p class="guest-intro">Send your thoughts!</p>
+
+      <form class="guest-form" id="guest-form" autocomplete="off">
+        <input class="guest-name" id="guest-name" type="text" maxlength="40"
+          placeholder="YOUR NAME (OPTIONAL)" aria-label="Your name (optional)">
+        <textarea class="guest-msg" id="guest-msg" rows="3" maxlength="280"
+          placeholder="Type your comment…" aria-label="Your comment" required></textarea>
+        <p class="guest-error" id="guest-error" role="alert" hidden></p>
+        <button class="guest-submit" type="submit">SEND&nbsp;✦</button>
+      </form>
+    </section>
+
+    <!-- Posted comments layer onto the right side of the screen (kept out of the
+         guests <section> so it anchors to the viewport, not the left-side panel).
+         Shown only while the Guests panel is open (.guests-open on the wrap). -->
+    <ul class="guest-list" id="guest-list"></ul>
+  </div>
+
+  <!-- Minecraft TNT explosion easter egg: plays full-screen (green keyed out)
+       with audio when the Arsène calling-card logo is clicked. -->
+  <video class="explosion-fx" id="explosion-fx" playsinline preload="auto">
+    <source src="./assets/explosion.mp4" type="video/mp4">
+  </video>
+
+  <!-- Tap-to-start gate: loops the red-stars idle and shows a CLICK-to-START
+       button (styled like the ESC/Back button). A click plays the clip's
+       "LET US START THIS" sting, then hands off to the menu intro. -->
+  <div class="start-gate" id="start-gate">
+    <!-- Looping red-stars clip is the live background; the P5 key art (red keyed
+         out so the clip shows through) sits on top, with the start prompt above
+         the logo's hand. On click the green-screen "LET US START THIS" sting
+         plays over it (its black keyed out), then hands off to the menu. -->
+    <video class="start-gate-video" id="start-gate-video" muted playsinline preload="auto" autoplay loop>
+      <source src="./assets/startbuttonloop.mp4" type="video/mp4">
+    </video>
+    <img class="start-gate-art" src="./assets/startmenu_cut.webp" alt="" aria-hidden="true">
+    <div class="start-gate-text"><span class="menu-label">Press Any</span><span class="menu-label">Button</span></div>
+    <video class="start-gate-sting" id="start-gate-sting" muted playsinline preload="auto">
+      <source src="./assets/startbuttongreenscreen.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+
+</html>
